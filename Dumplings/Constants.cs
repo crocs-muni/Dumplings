@@ -40,10 +40,22 @@ namespace Dumplings
 
         public static IEnumerable<Money> SamouraiPools = new Money[]
         {
-            Money.Coins(0.001m),
-            Money.Coins(0.01m),
-            Money.Coins(0.05m),
-            Money.Coins(0.5m)
+            Money.Coins(0.001m), // Samourai pools
+            Money.Coins(0.01m),  // Samourai pools
+            Money.Coins(0.05m),  // Samourai pools
+            Money.Coins(0.5m),   // Samourai pools
+            Money.Coins(0.25m),  // Ashigaru pools  
+            Money.Coins(0.025m)  // Ashigaru pools  
+       
+        };
+
+	 public static readonly uint256[] AshigaruSeedTxIds = new[]  
+        {
+            // 0.025 BTC pool genesis / very first mix
+            uint256.Parse("737a867727db9a2c981ad622f2fa14b021ce8b1066a001e34fb793f8da833155"),
+
+            // 0.25 BTC pool genesis / very first mix
+            uint256.Parse("7784df1182ab86ee33577b75109bb0f7c5622b9fb91df24b65ab2ab01b27dffa")
         };
     }
 }
