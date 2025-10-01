@@ -10,7 +10,7 @@ namespace Dumplings
         /// <summary>
         /// January 09, 2015 Bitcointalk announcement - https://bitcointalk.org/index.php?topic=919116.msg10096718
         /// </summary>
-        public const ulong FirstJoinMarketBlock = 392300;
+        public const ulong FirstJoinMarketBlock = 336861;  // block significantly before first known JoinMarket tx from 2015-05-07
 
         /// <summary>
         /// July 06, 2018 Twitter announcement - https://twitter.com/wasabiwallet/status/1537911130718228480

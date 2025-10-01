@@ -62,7 +62,7 @@ namespace Dumplings.Scanning
 
             var opreturnTransactionCache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 100000 });
 
-            ulong startingHeight = Constants.FirstWasabiBlock;
+            ulong startingHeight = Constants.FirstJoinMarketBlock; 
             ulong height = startingHeight;
             if (File.Exists(LastProcessedBlockHeightPath))
             {
@@ -183,7 +183,7 @@ namespace Dumplings.Scanning
                             {
                                 isOtherCj =
                                     indistinguishableOutputs.Length == 1 // If it isn't then it'd be likely a multidenomination CJ, which only Wasabi does.
-                                    && mostFrequentEqualOutputCount == outputCount - mostFrequentEqualOutputCount // Rarely it isn't, but it helps filtering out false positives.
+                                    && (mostFrequentEqualOutputCount == outputCount - mostFrequentEqualOutputCount || mostFrequentEqualOutputCount == outputCount - mostFrequentEqualOutputCount + 1) // Rarely it isn't, but it helps filtering out false positives. +1 condition is for case when taker make sweep tx with no change
                                     && outputs.Select(x => x.ScriptPubKey).Distinct().Count() >= mostFrequentEqualOutputCount // Otherwise more participants would be single actors which makes no sense.
                                     && inputs.Select(x => x.ScriptPubKey).Distinct().Count() >= mostFrequentEqualOutputCount // Otherwise more participants would be single actors which makes no sense.
                                     && inputValues.Max() <= mostFrequentEqualOutputValue + outputValues.Where(x => x != mostFrequentEqualOutputValue).Max() - Money.Coins(0.0001m); // I don't want to run expensive subset sum, so this is a shortcut to at least filter out false positives.
