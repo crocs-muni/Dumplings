@@ -29,6 +29,13 @@ namespace Dumplings
 
         public const ulong FirstWasabiNoCoordAddressBlock = 610000;
 
+        /// <summary>
+        /// 50 was the minimum input count at the beginning of Wasabi 2. (2022-2024) and with at least 10 equal outputs.. 
+        /// Post-zkSNACKs coordinators are sometimes smaller
+        /// </summary>
+        public const int MinWW2Inputs = 15;
+        public const int MinWW2EqualOutputs = 10;
+
         public static IEnumerable<Script> WasabiCoordScripts = new Script[]
         {
             BitcoinAddress.Create("bc1qs604c7jv6amk4cxqlnvuxv26hv3e48cds4m0ew", Network.Main).ScriptPubKey,

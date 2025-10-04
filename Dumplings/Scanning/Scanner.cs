@@ -129,7 +129,7 @@ namespace Dumplings.Scanning
                             {
                                 isWasabi2Cj =
                                     tx.Inputs.All(x => x.PrevOutput.ScriptPubKey.IsScriptType(ScriptType.P2WPKH) || x.PrevOutput.ScriptPubKey.IsScriptType(ScriptType.Taproot))
-                                    && inputCount >= 20 // 50 was the minimum input count at the beginning of Wasabi 2.
+                                    && inputCount >= Constants.MinWW2Inputs 
                                     && inputValues.SequenceEqual(inputValues.OrderByDescending(x => x)) // Inputs are ordered descending.
                                     && outputValues.SequenceEqual(outputValues.OrderByDescending(x => x)) // Outputs are ordered descending.
                                     && outputValues.Count(x => Wasabi2Denominations.Contains(x.Satoshi)) > outputCount * 0.8; // Most of the outputs contains the denomination.
@@ -148,7 +148,7 @@ namespace Dumplings.Scanning
                                     var uniqueOutputCount = tx.GetIndistinguishableOutputs(includeSingle: true).Count(x => x.count == 1);
                                     isWasabiCj =
                                         isNativeSegwitOnly
-                                        && mostFrequentEqualOutputCount >= 10 // At least 10 equal outputs.
+                                        && mostFrequentEqualOutputCount >= Constants.MinWW2EqualOutputs 
                                         && inputCount >= mostFrequentEqualOutputCount // More inptuts than most frequent equal outputs.
                                         && mostFrequentEqualOutputValue.Almost(Constants.ApproximateWasabiBaseDenomination, Constants.WasabiBaseDenominationPrecision) // The most frequent equal outputs must be almost the base denomination.
                                         && uniqueOutputCount >= 2; // It's very likely there's at least one change and at least one coord output those have unique values.
