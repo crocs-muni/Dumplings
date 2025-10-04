@@ -24,6 +24,7 @@ namespace Dumplings.Rpc
                 "witness_v0_keyhash" => RpcPubkeyType.TxWitnessV0Keyhash,
                 "witness_v0_scripthash" => RpcPubkeyType.TxWitnessV0Scripthash,
                 "witness_unknown" => RpcPubkeyType.TxWitnessUnknown,
+                "witness_v1_taproot" => RpcPubkeyType.TxWitnessV1Taproot,
                 _ => RpcPubkeyType.Unknown
             };
         }
@@ -53,6 +54,10 @@ namespace Dumplings.Rpc
             if (scriptPubKey.IsScriptType(ScriptType.P2WSH))
             {
                 return RpcPubkeyType.TxWitnessV0Scripthash;
+            }
+            if (scriptPubKey.IsScriptType(ScriptType.Taproot))
+            {
+                return RpcPubkeyType.TxWitnessV1Taproot;
             }
             if (scriptPubKey.IsScriptType(ScriptType.Witness))
             {
