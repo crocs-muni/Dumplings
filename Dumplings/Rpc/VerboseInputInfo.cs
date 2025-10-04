@@ -10,15 +10,18 @@ namespace Dumplings.Rpc
             Coinbase = coinbase;
         }
 
-        public VerboseInputInfo(OutPoint outPoint, VerboseOutputInfo prevOutput)
+        public VerboseInputInfo(OutPoint outPoint, VerboseOutputInfo prevOutput, uint sequence)
         {
             OutPoint = outPoint;
             PrevOutput = prevOutput;
+            Sequence = sequence;
         }
 
         public OutPoint OutPoint { get; }
 
         public VerboseOutputInfo PrevOutput { get; }
+
+        public uint Sequence { get; }
 
         public string Coinbase { get; }
 
@@ -31,7 +34,7 @@ namespace Dumplings.Rpc
                 return $"coinbase{Separator}{Coinbase}";
             }
 
-            return $"{OutPoint.Hash}{Separator}{OutPoint.N}{Separator}{PrevOutput}";
+            return $"{OutPoint.Hash}{Separator}{OutPoint.N}{Separator}{PrevOutput}{Separator}{Sequence}";
         }
 
         internal static VerboseInputInfo FromString(string x)
@@ -47,7 +50,12 @@ namespace Dumplings.Rpc
             var n = uint.Parse(parts[1]);
             var po = parts[2] is null ? null : VerboseOutputInfo.FromString(parts[2]);
 
-            return new VerboseInputInfo(new OutPoint(hash, n), po);
+            var seq = 0u;
+            if (parts.Length > 3 && parts[3] is null) {
+                seq = uint.Parse(parts[3]);
+            }
+
+            return new VerboseInputInfo(new OutPoint(hash, n), po, seq);
         }
     }
 }

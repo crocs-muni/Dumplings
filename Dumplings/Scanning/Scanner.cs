@@ -279,7 +279,7 @@ namespace Dumplings.Scanning
                             var tx = await Rpc.GetRawTransactionAsync(i.PrevOut.Hash).ConfigureAwait(false);
                             var o = tx.Outputs[i.PrevOut.N];
                             var voi = new VerboseOutputInfo(o.Value, o.ScriptPubKey);
-                            var vii = new VerboseInputInfo(i.PrevOut, voi);
+                            var vii = new VerboseInputInfo(i.PrevOut, voi, i.Sequence);
                             verboseInputs.Add(vii);
                         }
 

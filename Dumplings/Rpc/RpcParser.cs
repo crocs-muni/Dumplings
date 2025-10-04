@@ -113,7 +113,8 @@ namespace Dumplings.Rpc
                             prevOutput: new VerboseOutputInfo(
                                 value: Money.Coins(txinJson.GetProperty("prevout").GetProperty("value").GetDecimal()),
                                 scriptPubKey: Script.FromHex(txinJson.GetProperty("prevout").GetProperty("scriptPubKey").GetProperty("hex").GetString()),
-                                pubkeyType: txinJson.GetProperty("prevout").GetProperty("scriptPubKey").GetProperty("type").GetString())
+                                pubkeyType: txinJson.GetProperty("prevout").GetProperty("scriptPubKey").GetProperty("type").GetString()),
+                            sequence: txinJson.GetProperty("sequence").GetUInt32()
                         );
                     }
 
