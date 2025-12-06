@@ -24,6 +24,7 @@ namespace Dumplings.Rpc
                 "witness_v0_keyhash" => RpcPubkeyType.TxWitnessV0Keyhash,
                 "witness_v0_scripthash" => RpcPubkeyType.TxWitnessV0Scripthash,
                 "witness_unknown" => RpcPubkeyType.TxWitnessUnknown,
+                "witness_v1_taproot" => RpcPubkeyType.TxWitnessV1Taproot,
                 _ => RpcPubkeyType.Unknown
             };
         }
@@ -53,6 +54,10 @@ namespace Dumplings.Rpc
             if (scriptPubKey.IsScriptType(ScriptType.P2WSH))
             {
                 return RpcPubkeyType.TxWitnessV0Scripthash;
+            }
+            if (scriptPubKey.IsScriptType(ScriptType.Taproot))
+            {
+                return RpcPubkeyType.TxWitnessV1Taproot;
             }
             if (scriptPubKey.IsScriptType(ScriptType.Witness))
             {
@@ -108,7 +113,8 @@ namespace Dumplings.Rpc
                             prevOutput: new VerboseOutputInfo(
                                 value: Money.Coins(txinJson.GetProperty("prevout").GetProperty("value").GetDecimal()),
                                 scriptPubKey: Script.FromHex(txinJson.GetProperty("prevout").GetProperty("scriptPubKey").GetProperty("hex").GetString()),
-                                pubkeyType: txinJson.GetProperty("prevout").GetProperty("scriptPubKey").GetProperty("type").GetString())
+                                pubkeyType: txinJson.GetProperty("prevout").GetProperty("scriptPubKey").GetProperty("type").GetString()),
+                            sequence: txinJson.GetProperty("sequence").GetUInt32()
                         );
                     }
 

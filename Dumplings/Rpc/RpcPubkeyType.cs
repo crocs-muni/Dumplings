@@ -11,6 +11,7 @@ namespace Dumplings.Rpc
         TxNullData,
         TxWitnessV0Keyhash,
         TxWitnessV0Scripthash,
+        TxWitnessV1Taproot,
         TxWitnessUnknown,
     }
 }

@@ -82,7 +82,7 @@ namespace Dumplings.Rpc
             var outputCount = outputs.Length;
             var inputCount = inputs.Length;
             return isNativeSegwitOnly
-                    && inputCount >= 50 // 50 was the minimum input count at the beginning of Wasabi 2.
+                    && inputCount >= Constants.MinWW2Inputs 
                     && inputValues.SequenceEqual(inputValues.OrderByDescending(x => x)) // Inputs are ordered descending.
                     && outputValues.SequenceEqual(outputValues.OrderByDescending(x => x)) // Outputs are ordered descending.
                     && outputValues.Count(x => Scanner.Wasabi2Denominations.Contains(x.Satoshi)) > outputCount * 0.8; // Most of the outputs contains the denomination.

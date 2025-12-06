@@ -10,7 +10,7 @@ namespace Dumplings
         /// <summary>
         /// January 09, 2015 Bitcointalk announcement - https://bitcointalk.org/index.php?topic=919116.msg10096718
         /// </summary>
-        public const ulong FirstJoinMarketBlock = 392300;
+        public const ulong FirstJoinMarketBlock = 336861;  // block significantly before first known JoinMarket tx from 2015-05-07
 
         /// <summary>
         /// July 06, 2018 Twitter announcement - https://twitter.com/wasabiwallet/status/1537911130718228480
@@ -29,6 +29,13 @@ namespace Dumplings
 
         public const ulong FirstWasabiNoCoordAddressBlock = 610000;
 
+        /// <summary>
+        /// 50 was the minimum input count at the beginning of Wasabi 2. (2022-2024) and with at least 10 equal outputs.. 
+        /// Post-zkSNACKs coordinators are sometimes smaller
+        /// </summary>
+        public const int MinWW2Inputs = 15;
+        public const int MinWW2EqualOutputs = 10;
+
         public static IEnumerable<Script> WasabiCoordScripts = new Script[]
         {
             BitcoinAddress.Create("bc1qs604c7jv6amk4cxqlnvuxv26hv3e48cds4m0ew", Network.Main).ScriptPubKey,
@@ -40,10 +47,22 @@ namespace Dumplings
 
         public static IEnumerable<Money> SamouraiPools = new Money[]
         {
-            Money.Coins(0.001m),
-            Money.Coins(0.01m),
-            Money.Coins(0.05m),
-            Money.Coins(0.5m)
+            Money.Coins(0.001m), // Samourai pools
+            Money.Coins(0.01m),  // Samourai pools
+            Money.Coins(0.05m),  // Samourai pools
+            Money.Coins(0.5m),   // Samourai pools
+            Money.Coins(0.25m),  // Ashigaru pools  
+            Money.Coins(0.025m)  // Ashigaru pools  
+       
+        };
+
+	 public static readonly uint256[] AshigaruSeedTxIds = new[]  
+        {
+            // 0.025 BTC pool genesis / very first mix
+            uint256.Parse("737a867727db9a2c981ad622f2fa14b021ce8b1066a001e34fb793f8da833155"),
+
+            // 0.25 BTC pool genesis / very first mix
+            uint256.Parse("7784df1182ab86ee33577b75109bb0f7c5622b9fb91df24b65ab2ab01b27dffa")
         };
     }
 }

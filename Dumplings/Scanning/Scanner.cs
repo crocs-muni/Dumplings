@@ -62,7 +62,7 @@ namespace Dumplings.Scanning
 
             var opreturnTransactionCache = new MemoryCache(new MemoryCacheOptions() { SizeLimit = 100000 });
 
-            ulong startingHeight = Constants.FirstWasabiBlock;
+            ulong startingHeight = Constants.FirstJoinMarketBlock; 
             ulong height = startingHeight;
             if (File.Exists(LastProcessedBlockHeightPath))
             {
@@ -129,7 +129,7 @@ namespace Dumplings.Scanning
                             {
                                 isWasabi2Cj =
                                     tx.Inputs.All(x => x.PrevOutput.ScriptPubKey.IsScriptType(ScriptType.P2WPKH) || x.PrevOutput.ScriptPubKey.IsScriptType(ScriptType.Taproot))
-                                    && inputCount >= 50 // 50 was the minimum input count at the beginning of Wasabi 2.
+                                    && inputCount >= Constants.MinWW2Inputs 
                                     && inputValues.SequenceEqual(inputValues.OrderByDescending(x => x)) // Inputs are ordered descending.
                                     && outputValues.SequenceEqual(outputValues.OrderByDescending(x => x)) // Outputs are ordered descending.
                                     && outputValues.Count(x => Wasabi2Denominations.Contains(x.Satoshi)) > outputCount * 0.8; // Most of the outputs contains the denomination.
@@ -148,7 +148,7 @@ namespace Dumplings.Scanning
                                     var uniqueOutputCount = tx.GetIndistinguishableOutputs(includeSingle: true).Count(x => x.count == 1);
                                     isWasabiCj =
                                         isNativeSegwitOnly
-                                        && mostFrequentEqualOutputCount >= 10 // At least 10 equal outputs.
+                                        && mostFrequentEqualOutputCount >= Constants.MinWW2EqualOutputs 
                                         && inputCount >= mostFrequentEqualOutputCount // More inptuts than most frequent equal outputs.
                                         && mostFrequentEqualOutputValue.Almost(Constants.ApproximateWasabiBaseDenomination, Constants.WasabiBaseDenominationPrecision) // The most frequent equal outputs must be almost the base denomination.
                                         && uniqueOutputCount >= 2; // It's very likely there's at least one change and at least one coord output those have unique values.
@@ -183,7 +183,7 @@ namespace Dumplings.Scanning
                             {
                                 isOtherCj =
                                     indistinguishableOutputs.Length == 1 // If it isn't then it'd be likely a multidenomination CJ, which only Wasabi does.
-                                    && mostFrequentEqualOutputCount == outputCount - mostFrequentEqualOutputCount // Rarely it isn't, but it helps filtering out false positives.
+                                    && (mostFrequentEqualOutputCount == outputCount - mostFrequentEqualOutputCount || mostFrequentEqualOutputCount == outputCount - mostFrequentEqualOutputCount + 1) // Rarely it isn't, but it helps filtering out false positives. +1 condition is for case when taker make sweep tx with no change
                                     && outputs.Select(x => x.ScriptPubKey).Distinct().Count() >= mostFrequentEqualOutputCount // Otherwise more participants would be single actors which makes no sense.
                                     && inputs.Select(x => x.ScriptPubKey).Distinct().Count() >= mostFrequentEqualOutputCount // Otherwise more participants would be single actors which makes no sense.
                                     && inputValues.Max() <= mostFrequentEqualOutputValue + outputValues.Where(x => x != mostFrequentEqualOutputValue).Max() - Money.Coins(0.0001m); // I don't want to run expensive subset sum, so this is a shortcut to at least filter out false positives.
@@ -279,7 +279,7 @@ namespace Dumplings.Scanning
                             var tx = await Rpc.GetRawTransactionAsync(i.PrevOut.Hash).ConfigureAwait(false);
                             var o = tx.Outputs[i.PrevOut.N];
                             var voi = new VerboseOutputInfo(o.Value, o.ScriptPubKey);
-                            var vii = new VerboseInputInfo(i.PrevOut, voi);
+                            var vii = new VerboseInputInfo(i.PrevOut, voi, i.Sequence);
                             verboseInputs.Add(vii);
                         }
 
