@@ -43,6 +43,32 @@ namespace Dumplings.Scanning
         private decimal PreviousPercentageDone { get; set; } = -1;
         public static HashSet<long> Wasabi2Denominations { get; } = CreateWasabi2Denominations().ToHashSet();
 
+        /// <summary>
+        /// Identifies other (in practice JoinMarket) equal output coinjoin like transactions.
+        /// Only meaningful for non-coinbase transactions that weren't identified as Wasabi, Wasabi 2 or Samourai coinjoins.
+        /// </summary>
+        internal static bool IsOtherCoinJoin(VerboseTransactionInfo tx)
+        {
+            var indistinguishableOutputs = tx.GetIndistinguishableOutputs(includeSingle: false).ToArray();
+            if (!indistinguishableOutputs.Any())
+            {
+                return false;
+            }
+
+            var outputs = tx.Outputs.ToArray();
+            var inputs = tx.Inputs.Select(x => x.PrevOutput).ToArray();
+            var outputValues = outputs.Select(x => x.Value);
+            var inputValues = inputs.Select(x => x.Value);
+            var outputCount = outputs.Length;
+            (Money mostFrequentEqualOutputValue, int mostFrequentEqualOutputCount) = indistinguishableOutputs.OrderByDescending(x => x.count).First();
+
+            return indistinguishableOutputs.Length == 1 // If it isn't then it'd be likely a multidenomination CJ, which only Wasabi does.
+                && (mostFrequentEqualOutputCount == outputCount - mostFrequentEqualOutputCount || mostFrequentEqualOutputCount == outputCount - mostFrequentEqualOutputCount + 1) // Rarely it isn't, but it helps filtering out false positives. +1 condition is for case when taker make sweep tx with no change
+                && outputs.Select(x => x.ScriptPubKey).Distinct().Count() >= mostFrequentEqualOutputCount // Otherwise more participants would be single actors which makes no sense.
+                && inputs.Select(x => x.ScriptPubKey).Distinct().Count() >= mostFrequentEqualOutputCount // Otherwise more participants would be single actors which makes no sense.
+                && inputValues.Max() <= mostFrequentEqualOutputValue + outputValues.Where(x => x != mostFrequentEqualOutputValue).Max() - Money.Coins(0.0001m); // I don't want to run expensive subset sum, so this is a shortcut to at least filter out false positives.
+        }
+
         public async Task ScanAsync(bool rescan)
         {
             if (rescan)
@@ -181,12 +207,7 @@ namespace Dumplings.Scanning
                             // IDENTIFY OTHER EQUAL OUTPUT COINJOIN LIKE TRANSACTIONS
                             if (!isWasabi2Cj && !isWasabiCj && !isSamouraiCj)
                             {
-                                isOtherCj =
-                                    indistinguishableOutputs.Length == 1 // If it isn't then it'd be likely a multidenomination CJ, which only Wasabi does.
-                                    && (mostFrequentEqualOutputCount == outputCount - mostFrequentEqualOutputCount || mostFrequentEqualOutputCount == outputCount - mostFrequentEqualOutputCount + 1) // Rarely it isn't, but it helps filtering out false positives. +1 condition is for case when taker make sweep tx with no change
-                                    && outputs.Select(x => x.ScriptPubKey).Distinct().Count() >= mostFrequentEqualOutputCount // Otherwise more participants would be single actors which makes no sense.
-                                    && inputs.Select(x => x.ScriptPubKey).Distinct().Count() >= mostFrequentEqualOutputCount // Otherwise more participants would be single actors which makes no sense.
-                                    && inputValues.Max() <= mostFrequentEqualOutputValue + outputValues.Where(x => x != mostFrequentEqualOutputValue).Max() - Money.Coins(0.0001m); // I don't want to run expensive subset sum, so this is a shortcut to at least filter out false positives.
+                                isOtherCj = IsOtherCoinJoin(tx);
                             }
 
                             if (isWasabi2Cj)
