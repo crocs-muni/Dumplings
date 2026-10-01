@@ -44,10 +44,22 @@ namespace Dumplings.Scanning
         public static HashSet<long> Wasabi2Denominations { get; } = CreateWasabi2Denominations().ToHashSet();
 
         /// <summary>
+        /// Fee allowance for the max-input bound of "other" (JoinMarket) coinjoins: the larger of a fixed
+        /// amount covering mining fees on small denominations and a fraction of the denomination covering
+        /// the taker's fees to makers on large ones.
+        /// </summary>
+        internal static Money OtherCoinJoinFeeAllowance(Money equalOutputValue)
+        {
+            var relative = Money.Satoshis(equalOutputValue.Satoshi * Constants.OtherCoinJoinFeeAllowancePerMille / 1000);
+            return relative > Constants.OtherCoinJoinMinFeeAllowance ? relative : Constants.OtherCoinJoinMinFeeAllowance;
+        }
+
+        /// <summary>
         /// Identifies other (in practice JoinMarket) equal output coinjoin like transactions.
         /// Only meaningful for non-coinbase transactions that weren't identified as Wasabi, Wasabi 2 or Samourai coinjoins.
         /// </summary>
-        internal static bool IsOtherCoinJoin(VerboseTransactionInfo tx)
+        /// <param name="isKnownOtherCoinJoin">Whether a txid is an already detected other coinjoin.</param>
+        internal static bool IsOtherCoinJoin(VerboseTransactionInfo tx, Func<uint256, bool> isKnownOtherCoinJoin)
         {
             var indistinguishableOutputs = tx.GetIndistinguishableOutputs(includeSingle: false).ToArray();
             if (!indistinguishableOutputs.Any())
@@ -63,10 +75,20 @@ namespace Dumplings.Scanning
             (Money mostFrequentEqualOutputValue, int mostFrequentEqualOutputCount) = indistinguishableOutputs.OrderByDescending(x => x.count).First();
 
             return indistinguishableOutputs.Length == 1 // If it isn't then it'd be likely a multidenomination CJ, which only Wasabi does.
+                && mostFrequentEqualOutputCount >= Constants.OtherCoinJoinMinEqualOutputs // Taker plus at least two makers. Two-party look-alikes are dust/anchor tooling, not JoinMarket.
                 && (mostFrequentEqualOutputCount == outputCount - mostFrequentEqualOutputCount || mostFrequentEqualOutputCount == outputCount - mostFrequentEqualOutputCount + 1) // Rarely it isn't, but it helps filtering out false positives. +1 condition is for case when taker make sweep tx with no change
                 && outputs.Select(x => x.ScriptPubKey).Distinct().Count() >= mostFrequentEqualOutputCount // Otherwise more participants would be single actors which makes no sense.
                 && inputs.Select(x => x.ScriptPubKey).Distinct().Count() >= mostFrequentEqualOutputCount // Otherwise more participants would be single actors which makes no sense.
-                && inputValues.Max() <= mostFrequentEqualOutputValue + outputValues.Where(x => x != mostFrequentEqualOutputValue).Max() - Money.Coins(0.0001m); // I don't want to run expensive subset sum, so this is a shortcut to at least filter out false positives.
+                // No single input may exceed what one participant can take out (equal output + largest change)
+                // plus an allowance for fees. The allowance must be positive: in JoinMarket the taker pays the
+                // mining fee and the makers' fees, and makers earn, so the participant holding the largest input
+                // is routinely also the one with the largest change. The former "- 0.0001 BTC" margin assumed
+                // every participant pays a coordinator and rejected most such transactions.
+                && (inputValues.Max() <= mostFrequentEqualOutputValue + outputValues.Where(x => x != mostFrequentEqualOutputValue).Max() + OtherCoinJoinFeeAllowance(mostFrequentEqualOutputValue) // Shortcut instead of an expensive subset sum.
+                    // Graph evidence: a tx that already passed every structural rule above and spends outputs of several
+                    // known JoinMarket-like coinjoins is a remix, even when its taker paid unusually high fees. Only
+                    // replaces the max-input bound; the structural rules stay mandatory. Same lookup as the post-mix check.
+                    || tx.Inputs.Select(x => x.OutPoint.Hash).Distinct().Count(isKnownOtherCoinJoin) >= Constants.OtherCoinJoinMinParentCoinJoins);
         }
 
         public async Task ScanAsync(bool rescan)
@@ -207,7 +229,7 @@ namespace Dumplings.Scanning
                             // IDENTIFY OTHER EQUAL OUTPUT COINJOIN LIKE TRANSACTIONS
                             if (!isWasabi2Cj && !isWasabiCj && !isSamouraiCj)
                             {
-                                isOtherCj = IsOtherCoinJoin(tx);
+                                isOtherCj = IsOtherCoinJoin(tx, allOtherCoinJoinSet.Contains);
                             }
 
                             if (isWasabi2Cj)
