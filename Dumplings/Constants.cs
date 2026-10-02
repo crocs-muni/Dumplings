@@ -13,6 +13,25 @@ namespace Dumplings
         public const ulong FirstJoinMarketBlock = 336861;  // block significantly before first known JoinMarket tx from 2015-05-07
 
         /// <summary>
+        /// Fee allowance for the max-input check of JoinMarket-like coinjoins:
+        /// max(OtherCoinJoinMinFeeAllowance, equal output value * OtherCoinJoinFeeAllowancePerMille / 1000).
+        /// </summary>
+        public static readonly Money OtherCoinJoinMinFeeAllowance = Money.Coins(0.001m);
+
+        public const long OtherCoinJoinFeeAllowancePerMille = 5; // 0.5 % of the denomination
+
+        /// <summary>
+        /// Minimum number of equal outputs of a JoinMarket-like coinjoin (taker + at least two makers).
+        /// </summary>
+        public const int OtherCoinJoinMinEqualOutputs = 3;
+
+        /// <summary>
+        /// Number of distinct already-detected JoinMarket-like coinjoins a structurally valid tx must spend from
+        /// to be accepted even when it exceeds the max-input bound (e.g. a taker paying high fees).
+        /// </summary>
+        public const int OtherCoinJoinMinParentCoinJoins = 2;
+
+        /// <summary>
         /// July 06, 2018 Twitter announcement - https://twitter.com/wasabiwallet/status/1537911130718228480
         /// </summary>
         public const ulong FirstWasabi2Block = 741213;
